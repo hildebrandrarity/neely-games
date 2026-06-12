@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Civilization Designer + Arena (Civ 7 style)</title>
+<style>
+  :root{ --navy:#0b1d33; --panel:#13294b; --gold:#e8b339; --ink:#cfe0f5; --good:#52d273; --bad:#e0683f; }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Trebuchet MS",Verdana,sans-serif;background:var(--navy);color:#fff;}
+  header{text-align:center;padding:12px;background:linear-gradient(#0b1d33,#102844);border-bottom:2px solid var(--gold);}
+  header h1{margin:0;color:var(--gold);font-size:22px;letter-spacing:1px;}
+  header p{margin:4px 0 0;color:var(--ink);font-size:13px;}
+  .tabs{display:flex;justify-content:center;gap:8px;margin-top:10px;}
+  .tabs button{background:#0e2138;border:1px solid #2c5488;color:#fff;border-radius:8px 8px 0 0;padding:8px 16px;cursor:pointer;font-size:13px;font-weight:bold;}
+  .tabs button.on{background:var(--gold);color:#102844;}
+  .wrap{display:flex;flex-wrap:wrap;gap:14px;padding:14px;max-width:1150px;margin:0 auto;align-items:flex-start;}
+  .col{flex:1 1 340px;min-width:300px;display:flex;flex-direction:column;gap:12px;}
+  .card{background:var(--panel);border:1px solid #234a7a;border-radius:12px;padding:12px;}
+  .card h2{margin:0 0 8px;color:var(--gold);font-size:15px;border-bottom:1px solid #234a7a;padding-bottom:6px;}
+  label{display:block;font-size:12px;color:var(--ink);margin:8px 0 3px;}
+  input[type=text],textarea,select{width:100%;background:#0e2138;border:1px solid #2c5488;color:#fff;border-radius:7px;padding:8px;font-size:13px;font-family:inherit;}
+  .presets{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+  .pbtn{background:#0e2138;border:1px solid #2c5488;color:#fff;border-radius:8px;padding:8px;cursor:pointer;font-size:12px;text-align:left;line-height:1.3;}
+  .pbtn:hover{border-color:var(--gold);}
+  .pbtn b{color:var(--gold);}
+  .bonus{background:#0e2138;border:1px solid #2c5488;border-radius:8px;padding:8px;margin-bottom:8px;}
+  .bonus .row{display:flex;align-items:center;gap:8px;}
+  .bonus .cost{font-weight:bold;color:var(--gold);white-space:nowrap;font-size:13px;}
+  .budget{position:sticky;top:8px;}
+  .bar{height:22px;background:#0e2138;border-radius:11px;overflow:hidden;border:1px solid #2c5488;margin:6px 0;}
+  .bar > div{height:100%;background:linear-gradient(90deg,#52d273,#e8b339);transition:.2s;text-align:right;color:#0b1d33;font-weight:bold;font-size:12px;line-height:22px;padding-right:8px;}
+  .bar.over > div{background:linear-gradient(90deg,#e0683f,#c0392b);}
+  .budnum{text-align:center;font-size:14px;}
+  .budnum b{font-size:22px;color:var(--gold);}
+  .budnum.over b{color:var(--bad);}
+  button.act{width:100%;background:var(--gold);color:#102844;border:none;border-radius:8px;padding:10px;font-weight:bold;font-size:14px;cursor:pointer;margin-top:6px;}
+  button.act:hover{filter:brightness(1.08);}
+  button.act.alt{background:#234a7a;color:#fff;}
+  .msg{text-align:center;font-size:12px;min-height:16px;margin-top:6px;font-weight:bold;}
+  .civcard{background:linear-gradient(160deg,#102844,#0b1d33);border:2px solid var(--gold);border-radius:14px;padding:16px;}
+  .civcard h3{margin:0;color:var(--gold);font-size:20px;}
+  .civcard .leader{color:var(--ink);font-size:13px;margin:2px 0 10px;font-style:italic;}
+  .civcard .sec{margin:10px 0;padding:8px;background:rgba(255,255,255,0.04);border-radius:8px;border-left:3px solid var(--gold);}
+  .civcard .sec .t{font-size:11px;color:var(--gold);text-transform:uppercase;letter-spacing:1px;}
+  .civcard .sec .v{font-size:14px;font-weight:bold;margin-top:2px;}
+  .civcard .sec .d{font-size:12px;color:var(--ink);margin-top:3px;}
+  .tag{display:inline-block;background:#234a7a;color:#fff;border-radius:10px;padding:1px 8px;font-size:11px;margin:2px 2px 0 0;}
+  .rating{text-align:center;font-size:13px;margin-top:8px;color:var(--ink);}
+  .rosteritem{display:flex;align-items:center;gap:8px;background:#0e2138;border:1px solid #2c5488;border-radius:8px;padding:8px;margin-bottom:6px;}
+  .rosteritem .nm{flex:1;font-size:13px;}
+  .rosteritem .nm b{color:var(--gold);display:block;}
+  .rosteritem .nm span{font-size:11px;color:var(--ink);}
+  .mini{background:#234a7a;border:none;color:#fff;border-radius:6px;padding:5px 9px;font-size:11px;cursor:pointer;}
+  .mini:hover{background:var(--gold);color:#102844;}
+  .mini.del{background:#5a2b22;}
+  .mini.del:hover{background:var(--bad);}
+  .empty{color:#6f8bb0;font-size:12px;text-align:center;padding:14px;}
+  /* arena */
+  .vs{display:flex;align-items:center;gap:10px;}
+  .vs select{flex:1;}
+  .vs .x{color:var(--gold);font-weight:bold;font-size:18px;}
+  .catbar{display:flex;align-items:center;gap:6px;margin:5px 0;font-size:12px;}
+  .catbar .lab{width:78px;color:var(--ink);}
+  .catbar .track{flex:1;display:flex;height:16px;border-radius:8px;overflow:hidden;background:#0e2138;border:1px solid #2c5488;}
+  .catbar .a{background:#52d273;}
+  .catbar .b{background:#e0683f;}
+  .catbar .num{width:62px;text-align:center;font-weight:bold;}
+  .winner{text-align:center;font-size:18px;font-weight:bold;color:var(--gold);margin:10px 0;padding:10px;background:#0e2138;border-radius:10px;}
+  footer{text-align:center;color:#6f8bb0;font-size:11px;padding:10px;}
+  .hidden{display:none;}
+</style>
+</head>
+<body>
+<header>
+  <h1>CIVILIZATION DESIGNER + ARENA</h1>
+  <p>Build a roster of civs, save them, and battle them across the ages</p>
+  <div class="tabs">
+    <button id="tabDesign" class="on">🛠️ Designer</button>
+    <button id="tabRoster">📜 Roster</button>
+    <button id="tabArena">⚔️ Arena</button>
+  </div>
+</header>
+
+<!-- DESIGNER -->
+<div id="viewDesign">
+  <div class="wrap">
+    <div class="col">
+      <div class="card">
+        <h2>Start from a Homeland</h2>
+        <div class="presets" id="presets"></div>
+      </div>
+      <div class="card">
+        <h2>Identity</h2>
+        <label>Civilization name</label><input type="text" id="civName" placeholder="e.g. The Appalachian">
+        <label>Leader name</label><input type="text" id="leaderName" placeholder="e.g. Grandpa Earl">
+        <label>Associated Age</label>
+        <select id="age"><option>Antiquity</option><option>Exploration</option><option>Modern</option></select>
+        <label>Symbol / motto</label><input type="text" id="motto" placeholder="e.g. 'Mountaineers are always free'">
+      </div>
+    </div>
+    <div class="col">
+      <div class="card"><h2>Civ Ability <span style="font-size:11px;color:var(--ink)">(pick 1-2)</span></h2><div id="abilityList"></div></div>
+      <div class="card"><h2>Unique Unit</h2><label>Name</label><input type="text" id="unitName" placeholder="e.g. Ridge Rifleman"><label>Bonus</label><div id="unitList"></div></div>
+      <div class="card"><h2>Unique Building / Improvement</h2><label>Name</label><input type="text" id="bldgName" placeholder="e.g. The Coal Tipple"><label>Bonus</label><div id="bldgList"></div></div>
+    </div>
+    <div class="col">
+      <div class="card budget">
+        <h2>Balance Budget</h2>
+        <div class="budnum" id="budnum"><b id="spent">0</b> / 10 points</div>
+        <div class="bar" id="bar"><div id="barfill" style="width:0%"></div></div>
+        <div class="msg" id="budmsg">Spend up to 10. Going over makes your civ overpowered!</div>
+        <button class="act" id="genBtn">Generate Civ Card</button>
+        <button class="act alt" id="saveBtn">💾 Save to Roster</button>
+        <button class="act alt" id="newBtn">✨ New / Clear</button>
+      </div>
+      <div id="cardOut"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ROSTER -->
+<div id="viewRoster" class="hidden">
+  <div class="wrap"><div class="col" style="flex:1 1 100%;max-width:640px;margin:0 auto;">
+    <div class="card"><h2>Your Roster <span style="font-size:11px;color:var(--ink)" id="rcount"></span></h2><div id="rosterList"></div></div>
+  </div></div>
+</div>
+
+<!-- ARENA -->
+<div id="viewArena" class="hidden">
+  <div class="wrap"><div class="col" style="flex:1 1 100%;max-width:680px;margin:0 auto;">
+    <div class="card">
+      <h2>Battle Arena</h2>
+      <div class="vs">
+        <select id="fighterA"></select><span class="x">VS</span><select id="fighterB"></select>
+      </div>
+      <button class="act" id="fightBtn" style="margin-top:10px;">⚔️ FIGHT!</button>
+      <div class="msg" id="arenaMsg">Pick two civs from your roster. Build at least 2 in the Designer first!</div>
+    </div>
+    <div id="arenaOut"></div>
+  </div></div>
+</div>
+
+<footer>Self-contained design game - mechanics inspired by Civilization VII. Saves to this browser only.</footer>
+
+<script>
+const BUDGET=10;
+// cat weights: [science, culture, military, economy, growth]
+const ABILITIES=[
+  {id:"a1",label:"+1 Production in all cities",cost:3,cat:{economy:2,military:2}},
+  {id:"a2",label:"+1 Science from Mountains",cost:2,cat:{science:3}},
+  {id:"a3",label:"+1 Gold from Coast & River tiles",cost:2,cat:{economy:3}},
+  {id:"a4",label:"+1 Food from Rainforest & Marsh",cost:2,cat:{growth:3}},
+  {id:"a5",label:"+2 Culture in your Capital",cost:2,cat:{culture:3}},
+  {id:"a6",label:"Units heal +10 in your territory",cost:1,cat:{military:2}},
+  {id:"a7",label:"Settlers cost 25% less",cost:3,cat:{growth:3,economy:1}},
+  {id:"a8",label:"+1 Happiness per Wonder",cost:2,cat:{culture:2,growth:1}},
+  {id:"a9",label:"Embark & cross ocean earlier",cost:1,cat:{growth:2}}
+];
+const UNITS=[
+  {id:"u1",label:"+5 Combat Strength",cost:3,cat:{military:4}},
+  {id:"u2",label:"Ignores movement cost in hills/forest",cost:2,cat:{military:2}},
+  {id:"u3",label:"+1 Movement",cost:2,cat:{military:2}},
+  {id:"u4",label:"Heals fully when it defeats a foe",cost:2,cat:{military:3}},
+  {id:"u5",label:"Cheaper to build (-20%)",cost:1,cat:{military:1,economy:1}},
+  {id:"u6",label:"+10 Strength when defending",cost:2,cat:{military:3}},
+  {id:"u7",label:"Earns Culture from kills",cost:1,cat:{military:1,culture:1}}
+];
+const BLDGS=[
+  {id:"b1",label:"+3 of your civ's main yield",cost:3,cat:{economy:3}},
+  {id:"b2",label:"+2 yield AND +1 Happiness",cost:3,cat:{economy:2,culture:1,growth:1}},
+  {id:"b3",label:"Big adjacency bonus from a terrain",cost:2,cat:{science:2,economy:1}},
+  {id:"b4",label:"Provides a free specialist slot",cost:2,cat:{science:3}},
+  {id:"b5",label:"+1 yield, but cheap & ageless",cost:1,cat:{economy:1}},
+  {id:"b6",label:"Generates Tourism late-game",cost:2,cat:{culture:3}}
+];
+const PRESETS={
+  appalachia:{name:"The Appalachian",leader:"Grandpa Earl",motto:"Mountaineers are always free",ability:["a2"],unit:{name:"Ridge Rifleman",bonus:"u2"},bldg:{name:"The Coal Tipple",bonus:"b1"}},
+  carolinas:{name:"The Lowcountry",leader:"Aunt Caroline",motto:"Where the land meets the sea",ability:["a3"],unit:{name:"Blackbeard's Corsair",bonus:"u3"},bldg:{name:"The Lighthouse Wharf",bonus:"b3"}},
+  delta:{name:"The Delta",leader:"Uncle Magnolia",motto:"Down at the crossroads",ability:["a4"],unit:{name:"Riverboat Raider",bonus:"u4"},bldg:{name:"The Blues Hall",bonus:"b2"}},
+  philippines:{name:"The Islands of Liwanag",leader:"Lola Tala",motto:"A thousand islands, one light",ability:["a9","a3"],unit:{name:"Balangay Sailor",bonus:"u3"},bldg:{name:"The Rice Terraces",bonus:"b4"}}
+};
+const CATS=["science","culture","military","economy","growth"];
+const CATICON={science:"🔬",culture:"🎭",military:"⚔️",economy:"💰",growth:"🌱"};
+
+function findOpt(id){return [...ABILITIES,...UNITS,...BLDGS].find(o=>o.id===id);}
+function makeOptions(list,containerId,type){
+  const c=document.getElementById(containerId);c.innerHTML="";
+  list.forEach(o=>{
+    const div=document.createElement("div");div.className="bonus";
+    div.innerHTML=`<div class="row"><input type="checkbox" data-id="${o.id}" data-type="${type}"><span style="flex:1;font-size:13px;">${o.label}</span><span class="cost">${o.cost} pt${o.cost>1?'s':''}</span></div>`;
+    c.appendChild(div);
+  });
+}
+makeOptions(ABILITIES,"abilityList","ability");
+makeOptions(UNITS,"unitList","unit");
+makeOptions(BLDGS,"bldgList","bldg");
+function allBoxes(){return Array.from(document.querySelectorAll('input[type=checkbox][data-id]'));}
+
+function updateBudget(){
+  let spent=0;allBoxes().forEach(b=>{if(b.checked)spent+=findOpt(b.dataset.id).cost;});
+  document.getElementById("spent").textContent=spent;
+  const pct=Math.min(100,spent/BUDGET*100);
+  const bar=document.getElementById("bar"),fill=document.getElementById("barfill");
+  fill.style.width=pct+"%";fill.textContent=spent>0?spent:"";
+  const over=spent>BUDGET;
+  bar.classList.toggle("over",over);document.getElementById("budnum").classList.toggle("over",over);
+  const msg=document.getElementById("budmsg");
+  if(over)msg.innerHTML="<span style='color:var(--bad)'>Over budget! Trim a bonus to keep it fair.</span>";
+  else if(spent===BUDGET)msg.innerHTML="<span style='color:var(--good)'>Perfect - beautifully balanced!</span>";
+  else if(spent>=7)msg.innerHTML="<span style='color:var(--good)'>Strong and fair!</span>";
+  else msg.textContent="You have points to spare.";
+  return spent;
+}
+function enforceSingle(type){let last=null;allBoxes().forEach(b=>{if(b.dataset.type===type&&b.checked)last=b;});allBoxes().forEach(b=>{if(b.dataset.type===type&&b!==last)b.checked=false;});}
+document.addEventListener("change",e=>{if(e.target.matches('input[type=checkbox][data-id]')){const t=e.target.dataset.type;if((t==="unit"||t==="bldg")&&e.target.checked)enforceSingle(t);updateBudget();}});
+
+// presets
+const pc=document.getElementById("presets");
+const pmeta={appalachia:["⛰️ Appalachia","West Virginia roots"],carolinas:["🌊 Carolinas Coast","Lowcountry & lighthouses"],delta:["🏞️ Mississippi Delta","River, blues & bayou"],philippines:["🏝️ Philippine Islands","A thousand isles of light"]};
+for(const key in PRESETS){const b=document.createElement("div");b.className="pbtn";b.innerHTML=`<b>${pmeta[key][0]}</b><br>${pmeta[key][1]}`;b.addEventListener("click",()=>loadPreset(key));pc.appendChild(b);}
+function loadPreset(key){const p=PRESETS[key];fillForm(p);updateBudget();}
+function fillForm(p){
+  document.getElementById("civName").value=p.name||"";
+  document.getElementById("leaderName").value=p.leader||"";
+  document.getElementById("motto").value=p.motto||"";
+  document.getElementById("age").value=p.age||"Antiquity";
+  document.getElementById("unitName").value=(p.unit&&p.unit.name)||"";
+  document.getElementById("bldgName").value=(p.bldg&&p.bldg.name)||"";
+  allBoxes().forEach(b=>b.checked=false);
+  (p.ability||[]).forEach(id=>{const el=document.querySelector(`[data-id="${id}"]`);if(el)el.checked=true;});
+  if(p.unit&&p.unit.bonus){const e=document.querySelector(`[data-id="${p.unit.bonus}"]`);if(e)e.checked=true;}
+  if(p.bldg&&p.bldg.bonus){const e=document.querySelector(`[data-id="${p.bldg.bonus}"]`);if(e)e.checked=true;}
+}
+function picked(type){return allBoxes().filter(b=>b.checked&&b.dataset.type===type).map(b=>findOpt(b.dataset.id));}
+function readForm(){
+  return {
+    name:document.getElementById("civName").value||"Unnamed Civ",
+    leader:document.getElementById("leaderName").value||"Unknown Leader",
+    motto:document.getElementById("motto").value||"",
+    age:document.getElementById("age").value,
+    ability:picked("ability").map(o=>o.id),
+    unit:{name:document.getElementById("unitName").value||"Unique Unit",bonus:(picked("unit")[0]||{}).id||null},
+    bldg:{name:document.getElementById("bldgName").value||"Unique Building",bonus:(picked("bldg")[0]||{}).id||null}
+  };
+}
+function civSpent(c){let s=0;(c.ability||[]).forEach(id=>s+=findOpt(id).cost);if(c.unit&&c.unit.bonus)s+=findOpt(c.unit.bonus).cost;if(c.bldg&&c.bldg.bonus)s+=findOpt(c.bldg.bonus).cost;return s;}
+function civCats(c){
+  const t={science:0,culture:0,military:0,economy:0,growth:0};
+  const add=id=>{const o=findOpt(id);if(o&&o.cat)for(const k in o.cat)t[k]+=o.cat[k];};
+  (c.ability||[]).forEach(add);if(c.unit&&c.unit.bonus)add(c.unit.bonus);if(c.bldg&&c.bldg.bonus)add(c.bldg.bonus);
+  return t;
+}
+
+document.getElementById("genBtn").addEventListener("click",()=>renderCard(readForm(),"cardOut"));
+function renderCard(c,target){
+  const spent=civSpent(c);
+  let rating,rcolor;
+  if(spent>BUDGET){rating="⚠️ Overpowered - trim "+(spent-BUDGET)+" pts";rcolor="var(--bad)";}
+  else if(spent>=BUDGET-1){rating="🏆 Tournament-ready: powerful AND fair";rcolor="var(--good)";}
+  else if(spent>=6){rating="✅ Solid & balanced";rcolor="var(--good)";}
+  else if(spent>=3){rating="🌱 Gentle - room to add more";rcolor="var(--ink)";}
+  else{rating="Add a few bonuses!";rcolor="var(--ink)";}
+  const ab=(c.ability||[]).map(id=>findOpt(id));
+  const u=c.unit&&c.unit.bonus?findOpt(c.unit.bonus):null;
+  const b=c.bldg&&c.bldg.bonus?findOpt(c.bldg.bonus):null;
+  let html=`<div class="card civcard"><h3>${c.name}</h3><div class="leader">Led by ${c.leader}${c.motto?' &middot; "'+c.motto+'"':''}</div><div><span class="tag">${c.age} Age</span></div>`;
+  html+=`<div class="sec"><div class="t">Civ Ability</div>`;
+  if(ab.length)ab.forEach(a=>html+=`<div class="v">${a.label} <span style="color:var(--gold)">(${a.cost})</span></div>`);else html+=`<div class="d">None chosen</div>`;
+  html+=`</div>`;
+  html+=`<div class="sec"><div class="t">Unique Unit</div><div class="v">${c.unit.name}</div><div class="d">${u?u.label+' ('+u.cost+' pt)':'No bonus'}</div></div>`;
+  html+=`<div class="sec"><div class="t">Unique Building</div><div class="v">${c.bldg.name}</div><div class="d">${b?b.label+' ('+b.cost+' pt)':'No bonus'}</div></div>`;
+  html+=`<div class="rating" style="color:${rcolor};font-weight:bold;">${rating}</div><div class="rating">Budget used: ${spent} / ${BUDGET}</div>`;
+  html+=`<button class="act" onclick="window.print()">🖨️ Print / Save card</button></div>`;
+  document.getElementById(target).innerHTML=html;
+  document.getElementById(target).scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+document.getElementById("newBtn").addEventListener("click",()=>{fillForm({});updateBudget();document.getElementById("cardOut").innerHTML="";});
+
+// ---------- ROSTER (localStorage) ----------
+const LS_KEY="civDesignerRoster_v1";
+function loadRoster(){try{return JSON.parse(localStorage.getItem(LS_KEY))||[];}catch(e){return [];}}
+function saveRoster(r){localStorage.setItem(LS_KEY,JSON.stringify(r));}
+document.getElementById("saveBtn").addEventListener("click",()=>{
+  const c=readForm();const r=loadRoster();
+  const idx=r.findIndex(x=>x.name.toLowerCase()===c.name.toLowerCase());
+  if(idx>=0)r[idx]=c;else r.push(c);
+  saveRoster(r);renderRoster();populateArena();
+  const m=document.getElementById("budmsg");m.innerHTML="<span style='color:var(--good)'>Saved \""+c.name+"\" to roster!</span>";
+});
+function renderRoster(){
+  const r=loadRoster();const c=document.getElementById("rosterList");
+  document.getElementById("rcount").textContent="("+r.length+")";
+  if(!r.length){c.innerHTML='<div class="empty">No civs saved yet. Build one in the Designer and hit "Save to Roster".</div>';return;}
+  c.innerHTML="";
+  r.forEach((civ,i)=>{
+    const div=document.createElement("div");div.className="rosteritem";
+    div.innerHTML=`<div class="nm"><b>${civ.name}</b><span>${civ.leader} &middot; ${civSpent(civ)}/10 pts</span></div>
+      <button class="mini" data-load="${i}">Edit</button>
+      <button class="mini" data-view="${i}">View</button>
+      <button class="mini del" data-del="${i}">Delete</button>`;
+    c.appendChild(div);
+  });
+  c.querySelectorAll("[data-load]").forEach(b=>b.addEventListener("click",()=>{fillForm(r[b.dataset.load]);updateBudget();showView("Design");}));
+  c.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>{renderCard(r[b.dataset.view],"cardOut");showView("Design");}));
+  c.querySelectorAll("[data-del]").forEach(b=>b.addEventListener("click",()=>{const rr=loadRoster();rr.splice(b.dataset.del,1);saveRoster(rr);renderRoster();populateArena();}));
+}
+
+// ---------- ARENA ----------
+function populateArena(){
+  const r=loadRoster();const A=document.getElementById("fighterA"),B=document.getElementById("fighterB");
+  const opts=r.map((c,i)=>`<option value="${i}">${c.name}</option>`).join("");
+  A.innerHTML=opts;B.innerHTML=opts;if(r.length>1)B.selectedIndex=1;
+}
+document.getElementById("fightBtn").addEventListener("click",()=>{
+  const r=loadRoster();
+  if(r.length<2){document.getElementById("arenaMsg").innerHTML="<span style='color:var(--bad)'>You need at least 2 saved civs to battle!</span>";return;}
+  const ai=+document.getElementById("fighterA").value, bi=+document.getElementById("fighterB").value;
+  if(ai===bi){document.getElementById("arenaMsg").innerHTML="<span style='color:var(--bad)'>Pick two different civs!</span>";return;}
+  battle(r[ai],r[bi]);
+});
+function battle(ca,cb){
+  const a=civCats(ca),b=civCats(cb);
+  let aWins=0,bWins=0,html="";
+  // each category is a "round"; add a small luck roll for fun
+  CATS.forEach(cat=>{
+    const ra=a[cat]+Math.floor(Math.random()*3), rb=b[cat]+Math.floor(Math.random()*3);
+    const tot=ra+rb||1;const apct=Math.round(ra/tot*100);
+    if(ra>rb)aWins++;else if(rb>ra)bWins++;
+    html+=`<div class="catbar"><span class="lab">${CATICON[cat]} ${cat}</span><span class="num">${ra}</span><div class="track"><div class="a" style="width:${apct}%"></div><div class="b" style="width:${100-apct}%"></div></div><span class="num">${rb}</span></div>`;
+  });
+  let winLine;
+  if(aWins>bWins)winLine=`🏆 ${ca.name} wins! (${aWins} - ${bWins})`;
+  else if(bWins>aWins)winLine=`🏆 ${cb.name} wins! (${bWins} - ${aWins})`;
+  else winLine=`🤝 It's a draw! (${aWins} - ${bWins}) - a clash for the ages!`;
+  let out=`<div class="card"><div class="winner">${winLine}</div>`;
+  out+=`<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px;"><b style="color:var(--good)">${ca.name}</b><b style="color:var(--bad)">${cb.name}</b></div>`;
+  out+=html;
+  out+=`<div class="rating" style="margin-top:10px;">Each victory path mixes your civ's bonuses with a little luck of the dice. Rematch for a different outcome!</div></div>`;
+  document.getElementById("arenaOut").innerHTML=out;
+  document.getElementById("arenaMsg").textContent="";
+}
+
+// ---------- TABS ----------
+function showView(v){
+  document.getElementById("viewDesign").classList.toggle("hidden",v!=="Design");
+  document.getElementById("viewRoster").classList.toggle("hidden",v!=="Roster");
+  document.getElementById("viewArena").classList.toggle("hidden",v!=="Arena");
+  document.getElementById("tabDesign").classList.toggle("on",v==="Design");
+  document.getElementById("tabRoster").classList.toggle("on",v==="Roster");
+  document.getElementById("tabArena").classList.toggle("on",v==="Arena");
+  if(v==="Roster")renderRoster();
+  if(v==="Arena")populateArena();
+}
+document.getElementById("tabDesign").addEventListener("click",()=>showView("Design"));
+document.getElementById("tabRoster").addEventListener("click",()=>showView("Roster"));
+document.getElementById("tabArena").addEventListener("click",()=>showView("Arena"));
+
+updateBudget();renderRoster();populateArena();
+</script>
+</body>
+</html>
